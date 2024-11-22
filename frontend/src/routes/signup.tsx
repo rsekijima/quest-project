@@ -9,18 +9,18 @@ import {
   Input,
   Link,
   Text,
-} from "@chakra-ui/react"
+} from "@chakra-ui/react";
 import {
   Link as RouterLink,
   createFileRoute,
   redirect,
-} from "@tanstack/react-router"
-import { type SubmitHandler, useForm } from "react-hook-form"
+} from "@tanstack/react-router";
+import { type SubmitHandler, useForm } from "react-hook-form";
 
-import Logo from "/assets/images/fastapi-logo.svg"
-import type { UserRegister } from "../client"
-import useAuth, { isLoggedIn } from "../hooks/useAuth"
-import { confirmPasswordRules, emailPattern, passwordRules } from "../utils"
+import Logo from "/assets/images/fastapi-logo.svg";
+import type { UserRegister } from "../client";
+import useAuth, { isLoggedIn } from "../hooks/useAuth";
+import { confirmPasswordRules, namePattern, passwordRules } from "../utils";
 
 export const Route = createFileRoute("/signup")({
   component: SignUp,
@@ -28,17 +28,17 @@ export const Route = createFileRoute("/signup")({
     if (isLoggedIn()) {
       throw redirect({
         to: "/",
-      })
+      });
     }
   },
-})
+});
 
 interface UserRegisterForm extends UserRegister {
-  confirm_password: string
+  confirm_password: string;
 }
 
 function SignUp() {
-  const { signUpMutation } = useAuth()
+  const { signUpMutation } = useAuth();
   const {
     register,
     handleSubmit,
@@ -48,16 +48,15 @@ function SignUp() {
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: {
-      email: "",
-      full_name: "",
+      user_name: "",
       password: "",
       confirm_password: "",
     },
-  })
+  });
 
   const onSubmit: SubmitHandler<UserRegisterForm> = (data) => {
-    signUpMutation.mutate(data)
-  }
+    signUpMutation.mutate(data);
+  };
 
   return (
     <>
@@ -80,36 +79,21 @@ function SignUp() {
             alignSelf="center"
             mb={4}
           />
-          <FormControl id="full_name" isInvalid={!!errors.full_name}>
-            <FormLabel htmlFor="full_name" srOnly>
-              Full Name
-            </FormLabel>
-            <Input
-              id="full_name"
-              minLength={3}
-              {...register("full_name", { required: "Full Name is required" })}
-              placeholder="Full Name"
-              type="text"
-            />
-            {errors.full_name && (
-              <FormErrorMessage>{errors.full_name.message}</FormErrorMessage>
-            )}
-          </FormControl>
-          <FormControl id="email" isInvalid={!!errors.email}>
+          <FormControl id="user_name" isInvalid={!!errors.user_name}>
             <FormLabel htmlFor="username" srOnly>
-              Email
+              Username
             </FormLabel>
             <Input
               id="email"
-              {...register("email", {
-                required: "Email is required",
-                pattern: emailPattern,
+              {...register("user_name", {
+                required: "Username is required",
+                pattern: namePattern,
               })}
-              placeholder="Email"
-              type="email"
+              placeholder="Username"
+              type="text"
             />
-            {errors.email && (
-              <FormErrorMessage>{errors.email.message}</FormErrorMessage>
+            {errors.user_name && (
+              <FormErrorMessage>{errors.user_name.message}</FormErrorMessage>
             )}
           </FormControl>
           <FormControl id="password" isInvalid={!!errors.password}>
@@ -158,7 +142,7 @@ function SignUp() {
         </Container>
       </Flex>
     </>
-  )
+  );
 }
 
-export default SignUp
+export default SignUp;

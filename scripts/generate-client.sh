@@ -3,7 +3,7 @@
 set -e
 set -x
 
-cd backend
+cd auth-service
 python -c "import app.main; import json; print(json.dumps(app.main.app.openapi()))" > ../openapi.json
 cd ..
 node frontend/modify-openapi-operationids.js
