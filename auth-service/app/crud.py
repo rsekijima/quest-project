@@ -1,8 +1,9 @@
 
+from typing import Any
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
-from app.models import User, UserCreate
+from app.models import User, UserCreate, UserUpdate
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -27,4 +28,12 @@ def authenticate(*, session: Session, user_name: str, password: str) -> User | N
         return None
     if not verify_password(password, db_user.hashed_password):
         return None
+    return db_user
+
+def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
+    user_data = user_in.model_dump(exclude_unset=True)
+    db_user.sqlmodel_update(user_data)
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
     return db_user

@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -8,7 +8,8 @@ from app import crud
 from app.api.deps import CurrentUser, SessionDep
 from app.core import security
 from app.core.config import settings
-from app.models import  Token, UserPublic
+from app.core.events import publish_event
+from app.models import  Token, UserPublic, UserUpdate, Event
 
 router = APIRouter()
 
@@ -28,6 +29,17 @@ def login_access_token(
     elif user.status == 2:
         raise HTTPException(status_code=400, detail="Banned user")
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+
+    if user.status == 1:
+        event_in = Event(event_type="UserSignIn", user_id=user.user_id, timestamp=datetime.now())
+        publish_event(event_in)
+
+    if user.status == 0:
+        event_in = Event(event_type="NewUserSignIn", user_id=user.user_id, timestamp=datetime.now())
+        publish_event(event_in)
+        user_in = UserUpdate(status=1)
+        crud.update_user(session=session, db_user=user, user_in=user_in)
+    
     return Token(
         access_token=security.create_access_token(
             user.user_id, expires_delta=access_token_expires

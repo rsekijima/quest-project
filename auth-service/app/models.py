@@ -1,7 +1,8 @@
 import uuid
 
+from datetime import datetime
 from sqlmodel import Field, SQLModel
-
+from pydantic import BaseModel
 
 # Shared properties
 class UserBase(SQLModel):
@@ -26,6 +27,9 @@ class User(UserBase, table=True):
     user_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     hashed_password: str
 
+class UserUpdate(UserBase):
+    user_name: str | None = Field(default=None, index=True, max_length=255)
+    status: int # type: ignore
 
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
@@ -51,3 +55,8 @@ class Token(SQLModel):
 # Contents of JWT token
 class TokenPayload(SQLModel):
     sub: str | None = None
+
+class Event(BaseModel):
+    event_type: str
+    user_id: uuid.UUID
+    timestamp: datetime
