@@ -1,5 +1,7 @@
 # Quest project
 
+Implement a quest system for users. 
+
 ## How to run
 
 ```
@@ -32,14 +34,14 @@ Check if the toast for signin check-in should appear (TODO)
 ## What is missing
 
 - Kubernetes config
-- CQRS on the Catalog
+- Implement CQRS on the Catalog service
 - Finish the Quest Processing
-    - Right now it is just receiving the events but not doing the necessary logic to update the progress of the user on quests
+    - It is receiving the events but not doing the necessary logic to update the progress of the user on quests
 
 
 ## API login/access-token
 
-This API will be called on sign in, this will trigger to send events to the processing-service:
+This API will be called on sign in and it will trigger to send events to the processing-service:
 
 ```
     #Not new user
