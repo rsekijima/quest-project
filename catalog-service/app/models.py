@@ -9,7 +9,6 @@ class RewardBase(SQLModel):
 
 class Reward(RewardBase, table=True):
     reward_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    quests: list["Quest"] = Relationship(back_populates="reward")
     
 class RewardCreate(RewardBase):
     reward_name: str = Field(max_length=255)
@@ -25,8 +24,7 @@ class QuestBase(SQLModel):
 
 class Quest(QuestBase, table=True):
     quest_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    reward_id: uuid.UUID = Field(foreign_key="Reward.reward_id")
-    reward: Reward = Relationship(back_populates="quests")
+    reward_id: uuid.UUID = Field(foreign_key="reward.reward_id")
 
 class QuestCreate(QuestBase):
     pass

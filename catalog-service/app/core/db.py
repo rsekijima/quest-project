@@ -33,7 +33,7 @@ def init_db(session: Session) -> None:
         reward = crud.create_reward(session=session, reward_create=reward_in)
     
     quest = session.exec(
-        select(Quest).where(Quest.quest_name == settings.FIRST_QUEST_NAME)
+        select(Quest).where(Quest.name == settings.FIRST_QUEST_NAME)
     ).first()
     if not quest:
         quest_in = QuestCreate(
@@ -42,5 +42,5 @@ def init_db(session: Session) -> None:
             streak=settings.FIRST_QUEST_STEAK,
             duplication=settings.FIRST_QUEST_DUPLICATION,
         )
-        quest = crud.create_quest(session=session, quest_create=quest_in, reward_id=reward.reward_id)
+        quest = crud.create_quest(session=session, quest_in=quest_in, reward_id=reward.reward_id)
     

@@ -24,7 +24,7 @@ def get_reward_by_id(*, session: Session, reward_id: int) -> Reward | None:
 
 
 def create_quest(*, session: Session, quest_in: QuestCreate, reward_id: uuid.UUID) -> Quest:
-    db_quest = Reward.model_validate(quest_in, update={"reward_id": reward_id})
+    db_quest = Quest.model_validate(quest_in, update={"reward_id": reward_id})
     session.add(db_quest)
     session.commit()
     session.refresh(db_quest)
