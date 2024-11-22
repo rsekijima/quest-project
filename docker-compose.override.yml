@@ -68,6 +68,23 @@ services:
       - --reload
       - "app/main.py"
 
+  catalog-db:
+    restart: "no"
+    ports:
+      - "5433:5432"
+
+  catalog-service:
+    restart: "no"
+    ports:
+      - "8001:8000"
+    build:
+      context: ./catalog-service
+    # command: sleep infinity  # Infinite loop to keep container alive doing nothing
+    command:
+      - fastapi
+      - run
+      - --reload
+      - "app/main.py"
 
   frontend:
     restart: "no"

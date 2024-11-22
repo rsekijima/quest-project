@@ -19,6 +19,25 @@ services:
       - POSTGRES_USER=${AUTH_POSTGRES_USER?Variable not set}
       - POSTGRES_DB=${AUTH_POSTGRES_DB?Variable not set}
 
+  catalog-db:
+    image: postgres:12
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${CATALOG_POSTGRES_USER} -d ${CATALOG_POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    volumes:
+      - catalog-db-data:/var/lib/postgresql/data/pgdata
+    env_file:
+      - .env
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_PASSWORD=${CATALOG_POSTGRES_PASSWORD?Variable not set}
+      - POSTGRES_USER=${CATALOG_POSTGRES_USER?Variable not set}
+      - POSTGRES_DB=${CATALOG_POSTGRES_DB?Variable not set}
+
   adminer:
     image: adminer
     restart: always
@@ -27,6 +46,7 @@ services:
       - default
     depends_on:
       - auth-db
+      - catalog-db
     environment:
       - ADMINER_DESIGN=pepa-linha-dark
     labels:
@@ -120,6 +140,87 @@ services:
       # Enable redirection for HTTP and HTTPS
       - traefik.http.routers.${STACK_NAME?Variable not set}-backend-http.middlewares=https-redirect
 
+  catalog-prestart:
+     build:
+       context: ./catalog-service
+     networks:
+       - traefik-public
+       - default
+     depends_on:
+       catalog-db:
+         condition: service_healthy
+     command: bash scripts/prestart.sh
+     env_file:
+       - .env
+     environment:
+       - DOMAIN=${DOMAIN}
+       - FRONTEND_HOST=${FRONTEND_HOST?Variable not set}
+       - ENVIRONMENT=${ENVIRONMENT}
+       - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
+       - POSTGRES_SERVER=catalog-db
+       - POSTGRES_PORT=${CATALOG_POSTGRES_PORT}
+       - POSTGRES_DB=${CATALOG_POSTGRES_DB}
+       - POSTGRES_USER=${CATALOG_POSTGRES_USER?Variable not set}
+       - POSTGRES_PASSWORD=${CATALOG_POSTGRES_PASSWORD?Variable not set}
+       - FIRST_REWARD_NAME=${FIRST_REWARD_NAME?Variable not set}
+       - FIRST_REWARD_ITEM=${FIRST_REWARD_ITEM?Variable not set}
+       - FIRST_REWARD_QUANTITY=${FIRST_REWARD_QUANTITY?Variable not set}
+       - FIRST_QUEST_NAME=${FIRST_QUEST_NAME?Variable not set}
+       - FIRST_QUEST_STEAK=${FIRST_QUEST_STEAK?Variable not set}
+       - FIRST_QUEST_DUPLICATION=${FIRST_QUEST_DUPLICATION?Variable not set}
+       - FIRST_QUEST_AUTO_CLAIM=${FIRST_QUEST_AUTO_CLAIM?Variable not set}
+
+  catalog-service:
+     restart: always
+     networks:
+       - traefik-public
+       - default
+     depends_on:
+       catalog-db:
+         condition: service_healthy
+       catalog-prestart:
+         condition: service_completed_successfully
+     env_file:
+       - .env
+     environment:
+       - DOMAIN=${DOMAIN}
+       - FRONTEND_HOST=${FRONTEND_HOST?Variable not set}
+       - ENVIRONMENT=${ENVIRONMENT}
+       - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
+       - POSTGRES_SERVER=catalog-db
+       - POSTGRES_PORT=${CATALOG_POSTGRES_PORT}
+       - POSTGRES_DB=${CATALOG_POSTGRES_DB}
+       - POSTGRES_USER=${CATALOG_POSTGRES_USER?Variable not set}
+       - POSTGRES_PASSWORD=${CATALOG_POSTGRES_PASSWORD?Variable not set}
+  
+     healthcheck:
+       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
+       interval: 10s
+       timeout: 5s
+       retries: 5
+  
+     build:
+       context: ./catalog-service
+     labels:
+       - traefik.enable=true
+       - traefik.docker.network=traefik-public
+       - traefik.constraint-label=traefik-public
+  
+       - traefik.http.services.${STACK_NAME?Variable not set}-catalog.loadbalancer.server.port=8001
+  
+       - traefik.http.routers.${STACK_NAME?Variable not set}-catalog-http.rule=Host(`api.${DOMAIN?Variable not set}`)
+       - traefik.http.routers.${STACK_NAME?Variable not set}-catalog-http.entrypoints=http
+  
+       - traefik.http.routers.${STACK_NAME?Variable not set}-catalog-https.rule=Host(`api.${DOMAIN?Variable not set}`)
+       - traefik.http.routers.${STACK_NAME?Variable not set}-catalog-https.entrypoints=https
+       - traefik.http.routers.${STACK_NAME?Variable not set}-catalog-https.tls=true
+       - traefik.http.routers.${STACK_NAME?Variable not set}-catalog-https.tls.certresolver=le
+  
+       # Enable redirection for HTTP and HTTPS
+       - traefik.http.routers.${STACK_NAME?Variable not set}-catalog-http.middlewares=https-redirect
+  
+  
+      
   frontend:
     restart: always
     networks:
@@ -149,6 +250,7 @@ services:
       - traefik.http.routers.${STACK_NAME?Variable not set}-frontend-http.middlewares=https-redirect
 volumes:
   app-db-data:
+  catalog-db-data:
 
 networks:
   traefik-public:
