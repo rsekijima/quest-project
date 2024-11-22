@@ -1,43 +1,33 @@
+from typing import Any
 import uuid
 
 from sqlmodel import Session, select
 
-from app.models import Reward, Quest, QuestCreate, RewardCreate
+from app.models import Event, EventCreate, UserQuestReward, UserQuestRewardCreate, UserQuestRewardUpdate
 
-
-def create_reward(*, session: Session, reward_create: RewardCreate) -> Reward:
-    db_reward = Reward.model_validate(reward_create)
-    session.add(db_reward)
+def create_user_quest_reward(*, session: Session, user_quest_reward_create: UserQuestRewardCreate) -> UserQuestReward:
+    db_user_quest_reward = UserQuestReward.model_validate(user_quest_reward_create)
+    session.add(db_user_quest_reward)
     session.commit()
-    session.refresh(db_reward)
-    return db_reward
+    session.refresh(db_user_quest_reward)
+    return db_user_quest_reward
 
-def get_reward_by_name(*, session: Session, reward_name: str) -> Reward | None:
-    statement = select(Reward).where(Reward.reward_name == reward_name)
-    session_reward = session.exec(statement).first()
-    return session_reward
-
-def get_reward_by_id(*, session: Session, reward_id: int) -> Reward | None:
-    statement = select(Reward).where(Reward.reward_id == reward_id)
-    session_reward = session.exec(statement).first()
-    return session_reward
-
-
-def create_quest(*, session: Session, quest_in: QuestCreate, reward_id: uuid.UUID) -> Quest:
-    db_quest = Quest.model_validate(quest_in, update={"reward_id": reward_id})
-    session.add(db_quest)
+def update_user_quest_reward(*, session: Session, db_user_quest_reward: UserQuestReward, user_quest_reward_update: UserQuestRewardUpdate) -> Any:
+    user_quest_reward_data = user_quest_reward_update.model_dump(exclude_unset=True)
+    db_user_quest_reward.sqlmodel_update(user_quest_reward_data)
+    session.add(db_user_quest_reward)
     session.commit()
-    session.refresh(db_quest)
-    return db_quest
+    session.refresh(db_user_quest_reward)
+    return db_user_quest_reward
 
+def get_user_quest_reward_by_user_id_quest_id(*, session: Session, user_id: uuid.UUID, quest_id: uuid.UUID) -> UserQuestReward | None:
+    statement = select(UserQuestReward).where((UserQuestReward.user_id == user_id) & (UserQuestReward.quest_id == quest_id))
+    session_user = session.exec(statement).first()
+    return session_user
 
-def get_quest_by_name(*, session: Session, name: str) -> Quest | None:
-    statement = select(Quest).where(Quest.name == name)
-    session_quest = session.exec(statement).first()
-    return session_quest
-
-def get_quest_by_id(*, session: Session, quest_id: int) -> Quest | None:
-    statement = select(Quest).where(Quest.quest_id == quest_id)
-    session_quest = session.exec(statement).first()
-    return session_quest
-
+def create_event(*, session: Session, event_create: EventCreate) -> Event:
+    db_event = Event.model_validate(event_create)
+    session.add(db_event)
+    session.commit()
+    session.refresh(db_event)
+    return db_event
