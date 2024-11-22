@@ -38,6 +38,25 @@ services:
       - POSTGRES_USER=${CATALOG_POSTGRES_USER?Variable not set}
       - POSTGRES_DB=${CATALOG_POSTGRES_DB?Variable not set}
 
+  processing-db:
+    image: postgres:12
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PROCESSING_POSTGRES_USER} -d ${PROCESSING_POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    volumes:
+      - processing-db-data:/var/lib/postgresql/data/pgdata
+    env_file:
+      - .env
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - POSTGRES_PASSWORD=${PROCESSING_POSTGRES_PASSWORD?Variable not set}
+      - POSTGRES_USER=${PROCESSING_POSTGRES_USER?Variable not set}
+      - POSTGRES_DB=${PROCESSING_POSTGRES_DB?Variable not set}
+
   adminer:
     image: adminer
     restart: always
@@ -61,6 +80,18 @@ services:
       - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-https.tls=true
       - traefik.http.routers.${STACK_NAME?Variable not set}-adminer-https.tls.certresolver=le
       - traefik.http.services.${STACK_NAME?Variable not set}-adminer.loadbalancer.server.port=8080
+
+  rabbitmq:
+    image: "rabbitmq:management"
+    restart: "no"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - default
 
   auth-prestart:
     build:
@@ -219,6 +250,84 @@ services:
        # Enable redirection for HTTP and HTTPS
        - traefik.http.routers.${STACK_NAME?Variable not set}-catalog-http.middlewares=https-redirect
   
+  processing-prestart:
+     build:
+       context: ./processing-service
+     networks:
+       - traefik-public
+       - default
+     depends_on:
+       processing-db:
+         condition: service_healthy
+     command: bash scripts/prestart.sh
+     env_file:
+       - .env
+     environment:
+       - DOMAIN=${DOMAIN}
+       - FRONTEND_HOST=${FRONTEND_HOST?Variable not set}
+       - ENVIRONMENT=${ENVIRONMENT}
+       - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
+       - POSTGRES_SERVER=processing-db
+       - POSTGRES_PORT=${PROCESSING_POSTGRES_PORT}
+       - POSTGRES_DB=${PROCESSING_POSTGRES_DB}
+       - POSTGRES_USER=${PROCESSING_POSTGRES_USER?Variable not set}
+       - POSTGRES_PASSWORD=${PROCESSING_POSTGRES_PASSWORD?Variable not set}
+       - FIRST_REWARD_NAME=${FIRST_REWARD_NAME?Variable not set}
+       - FIRST_REWARD_ITEM=${FIRST_REWARD_ITEM?Variable not set}
+       - FIRST_REWARD_QUANTITY=${FIRST_REWARD_QUANTITY?Variable not set}
+       - FIRST_QUEST_NAME=${FIRST_QUEST_NAME?Variable not set}
+       - FIRST_QUEST_STEAK=${FIRST_QUEST_STEAK?Variable not set}
+       - FIRST_QUEST_DUPLICATION=${FIRST_QUEST_DUPLICATION?Variable not set}
+       - FIRST_QUEST_AUTO_CLAIM=${FIRST_QUEST_AUTO_CLAIM?Variable not set}
+
+  processing-service:
+     restart: always
+     networks:
+       - traefik-public
+       - default
+     depends_on:
+       processing-db:
+         condition: service_healthy
+       processing-prestart:
+         condition: service_completed_successfully
+     env_file:
+       - .env
+     environment:
+       - DOMAIN=${DOMAIN}
+       - FRONTEND_HOST=${FRONTEND_HOST?Variable not set}
+       - ENVIRONMENT=${ENVIRONMENT}
+       - BACKEND_CORS_ORIGINS=${BACKEND_CORS_ORIGINS}
+       - POSTGRES_SERVER=processing-db
+       - POSTGRES_PORT=${PROCESSING_POSTGRES_PORT}
+       - POSTGRES_DB=${PROCESSING_POSTGRES_DB}
+       - POSTGRES_USER=${PROCESSING_POSTGRES_USER?Variable not set}
+       - POSTGRES_PASSWORD=${PROCESSING_POSTGRES_PASSWORD?Variable not set}
+  
+     healthcheck:
+       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
+       interval: 10s
+       timeout: 5s
+       retries: 5
+  
+     build:
+       context: ./processing-service
+     labels:
+       - traefik.enable=true
+       - traefik.docker.network=traefik-public
+       - traefik.constraint-label=traefik-public
+  
+       - traefik.http.services.${STACK_NAME?Variable not set}-processing.loadbalancer.server.port=8002
+  
+       - traefik.http.routers.${STACK_NAME?Variable not set}-processing-http.rule=Host(`api.${DOMAIN?Variable not set}`)
+       - traefik.http.routers.${STACK_NAME?Variable not set}-processing-http.entrypoints=http
+  
+       - traefik.http.routers.${STACK_NAME?Variable not set}-processing-https.rule=Host(`api.${DOMAIN?Variable not set}`)
+       - traefik.http.routers.${STACK_NAME?Variable not set}-processing-https.entrypoints=https
+       - traefik.http.routers.${STACK_NAME?Variable not set}-processing-https.tls=true
+       - traefik.http.routers.${STACK_NAME?Variable not set}-processing-https.tls.certresolver=le
+  
+       # Enable redirection for HTTP and HTTPS
+       - traefik.http.routers.${STACK_NAME?Variable not set}-processing-http.middlewares=https-redirect
   
       
   frontend:
@@ -251,6 +360,7 @@ services:
 volumes:
   app-db-data:
   catalog-db-data:
+  processing-db-data:
 
 networks:
   traefik-public:

@@ -86,6 +86,24 @@ services:
       - --reload
       - "app/main.py"
 
+  processing-db:
+    restart: "no"
+    ports:
+      - "5434:5432"
+
+  processing-service:
+    restart: "no"
+    ports:
+      - "8002:8000"
+    build:
+      context: ./processing-service
+    # command: sleep infinity  # Infinite loop to keep container alive doing nothing
+    command:
+      - fastapi
+      - run
+      - --reload
+      - "app/main.py"
+
   frontend:
     restart: "no"
     ports:
