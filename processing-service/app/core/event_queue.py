@@ -3,7 +3,7 @@ import json
 import logging
 
 from app.core.config import settings
-from app.models import Event
+from app.models import EventPublish, Event
 from app.service.events import process_event
 
 logging.basicConfig(level=logging.INFO)
@@ -19,7 +19,7 @@ class RabbitMQClient:
         self.connection = await aio_pika.connect_robust(settings.RABBITMQ)
         self.channel = await self.connection.channel()
 
-    async def publish(self, event: Event):
+    async def publish(self, event: EventPublish):
         if not self.channel:
             await self.connect()
 
