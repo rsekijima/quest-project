@@ -1,6 +1,6 @@
 import uuid
 
-from sqlmodel import Field, SQLModel, Relationship
+from sqlmodel import Field, SQLModel
 
 class RewardBase(SQLModel):
     reward_name: str = Field(unique=True, index=True, max_length=255)
