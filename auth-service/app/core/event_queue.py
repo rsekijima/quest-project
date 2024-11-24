@@ -40,7 +40,7 @@ class RabbitMQClient:
                 data = json.loads(json.loads(message.body))
                 event = Event(**data)
                 logger.info(f"Received event: {event}")
-                await process_event()
+                await process_event(event=event)
 
         await queue.consume(on_message, no_ack=False)
 
