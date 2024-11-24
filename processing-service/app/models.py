@@ -1,7 +1,9 @@
 import uuid
 
 from pydantic import BaseModel
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, SQLModel, Column
+from typing import Dict, Any
+from sqlalchemy.dialects.postgresql import JSON
 
 from datetime import datetime
 
@@ -30,6 +32,10 @@ class EventBase(SQLModel):
     event_type: str
     user_id: uuid.UUID
     timestamp: datetime
+    event_data: Dict[str, Any] = Field(
+        default={},
+        sa_column=Column(JSON)
+    )
 
 class EventCreate(EventBase):
     pass

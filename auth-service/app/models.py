@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 from sqlmodel import Field, SQLModel
 from pydantic import BaseModel
+from typing import Dict, Any
 
 # Shared properties
 class UserBase(SQLModel):
@@ -60,3 +61,4 @@ class Event(BaseModel):
     event_type: str
     user_id: uuid.UUID
     timestamp: datetime
+    event_data: Dict[str, Any] = {}

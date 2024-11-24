@@ -84,7 +84,7 @@ def process_event(event: Event):
         
         if user_quest_reward and can_receive_reward(quest=quest,user_quest_reward=user_quest_reward):
             reset_streak(session=session, user_quest_reward=user_quest_reward)
-            quest_complete_event_create = EventCreate(event_type="QuestCompleted", user_id=event.user_id,timestamp=datetime.now())
+            quest_complete_event_create = EventCreate(event_type="QuestCompleted", user_id=event.user_id,timestamp=datetime.now(), event_data={"quest_id": str(quest.quest_id)})
             create_event(session=session, event_create=quest_complete_event_create)
 
 

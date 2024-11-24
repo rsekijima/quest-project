@@ -31,11 +31,11 @@ def login_access_token(
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
     if user.status == 1:
-        event_in = Event(event_type="UserSignIn", user_id=user.user_id, timestamp=datetime.now())
+        event_in = Event(event_type="UserSignIn", user_id=user.user_id, timestamp=datetime.now(), event_data={})
         publish_event(event_in)
 
     if user.status == 0:
-        event_in = Event(event_type="NewUserSignIn", user_id=user.user_id, timestamp=datetime.now())
+        event_in = Event(event_type="NewUserSignIn", user_id=user.user_id, timestamp=datetime.now(), event_data={})
         publish_event(event_in)
         user_in = UserUpdate(status=1)
         crud.update_user(session=session, db_user=user, user_in=user_in)
