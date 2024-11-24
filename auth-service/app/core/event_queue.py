@@ -1,23 +1,45 @@
-import pika
+import aio_pika
 import json
-from app.core.config import settings
-from app.models import Event
 import logging
+
+from app.core.config import settings
+from app.models import EventPublish, Event
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+class RabbitMQClient:
+    def __init__(self, queue_name: str = "user_events"):
+        self.queue_name = queue_name
+        self.connection = None
+        self.channel = None
 
-def publish_event(event: Event, queue_name: str = "user_events"):
-    connection = pika.BlockingConnection(pika.URLParameters(settings.RABBITMQ))
-    channel = connection.channel()
+    async def connect(self):
+        self.connection = await aio_pika.connect_robust(settings.RABBITMQ)
+        self.channel = await self.connection.channel()
 
-    channel.basic_publish(
-        exchange="",
-        routing_key=queue_name,
-        body=json.dumps(event.model_dump_json()),
-        properties=pika.BasicProperties(content_type="application/json"),
-    )
+    async def publish(self, event: EventPublish):
+        if not self.channel:
+            await self.connect()
 
-    logger.info(f"Published event to {queue_name}: {event}")
-    connection.close()
+        await self.channel.default_exchange.publish(
+            aio_pika.Message(body=json.dumps(event.model_dump_json()).encode('utf-8')),
+            routing_key=self.queue_name,
+        )
+        logger.info(f"Published event: {event}")
+
+    async def consume(self):
+        if not self.channel:
+            await self.connect()
+
+        queue = await self.channel.declare_queue(self.queue_name)
+
+        async def on_message(message: aio_pika.IncomingMessage):
+            async with message.process():
+                data = json.loads(json.loads(message.body))
+                event = Event(**data)
+                logger.info(f"Received event: {event}")
+
+        await queue.consume(on_message, no_ack=False)
+
+rabbitmq_client = RabbitMQClient()

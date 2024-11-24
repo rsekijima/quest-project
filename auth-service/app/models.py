@@ -62,3 +62,15 @@ class Event(BaseModel):
     user_id: uuid.UUID
     timestamp: datetime
     event_data: Dict[str, Any] = {}
+
+class EventPublish(Event):
+    pass
+
+class EventClaimBase(SQLModel):
+    user_id: uuid.UUID
+    quest_id: uuid.UUID
+    reward_type: str
+    reward_qnt: int
+
+class EventClaim(EventClaimBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
