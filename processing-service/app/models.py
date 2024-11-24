@@ -47,10 +47,10 @@ class Event(EventBase,table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
 
 class Quest(BaseModel):
+    quest_id: uuid.UUID
     auto_claim: bool 
     streak: int 
     duplication: int 
     name: str
     description: str | None 
-    quest_id: uuid.UUID
     reward_id: uuid.UUID
