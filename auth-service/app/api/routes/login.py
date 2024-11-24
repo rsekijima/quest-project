@@ -32,11 +32,11 @@ async def login_access_token(
 
     if user.status == 1:
         event_in = EventPublish(event_type="UserSignIn", user_id=user.user_id, timestamp=datetime.now(), event_data={})
-        await rabbitmq_client.publish(event=event_in)
+        await rabbitmq_client.publish(event=event_in,publish_queue="processing-events")
 
     if user.status == 0:
         event_in = EventPublish(event_type="NewUserSignIn", user_id=user.user_id, timestamp=datetime.now(), event_data={})
-        await rabbitmq_client.publish(event=event_in)
+        await rabbitmq_client.publish(event=event_in,publish_queue="processing-events")
         user_in = UserUpdate(status=1)
         crud.update_user(session=session, db_user=user, user_in=user_in)
     

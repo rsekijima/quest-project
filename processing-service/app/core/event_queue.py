@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class RabbitMQClient:
-    def __init__(self, queue_name: str = "user_events"):
+    def __init__(self, queue_name: str):
         self.queue_name = queue_name
         self.connection = None
         self.channel = None
@@ -19,13 +19,13 @@ class RabbitMQClient:
         self.connection = await aio_pika.connect_robust(settings.RABBITMQ)
         self.channel = await self.connection.channel()
 
-    async def publish(self, event: EventPublish):
+    async def publish(self, event: EventPublish, publish_queue: str):
         if not self.channel:
             await self.connect()
 
         await self.channel.default_exchange.publish(
-            aio_pika.Message(body=json.dumps(event.model_dump_json())),
-            routing_key=self.queue_name,
+            aio_pika.Message(body=json.dumps(event.model_dump_json()).encode("utf-8")),
+            routing_key=publish_queue,
         )
         logger.info(f"Published event: {event}")
 
@@ -40,9 +40,9 @@ class RabbitMQClient:
                 data = json.loads(json.loads(message.body))
                 event = Event(**data)
                 logger.info(f"Received event: {event}")
-                process_event(event)
+                await process_event(event)
 
 
         await queue.consume(on_message, no_ack=False)
 
-rabbitmq_client = RabbitMQClient()
+rabbitmq_client = RabbitMQClient(queue_name="processing-events")
