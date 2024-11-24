@@ -38,20 +38,19 @@ database: app
 - API gateway and load balancer (traefik proxy)
 - Implement an event queue (RabbitMQ)
 - Dockerfiles and a dockercompose file to run all containers
-
+- Cache on the Quest Catalog Service (CQRS) 
 
 ## What is missing
 
-- Kubernetes config
-- Implement CQRS on the Catalog service
-- Cache
+- Kubernetes configuration
+- Implement complete CQRS on the Catalog service
 
 
 ## API `login/access-token`
 
 This API will be called on sign in and it will trigger to send events via event queue to the `processing-service`:
 
-```
+```python
     #Not new user
     if user.status == 1:
         event_in = EventPublish(event_type="UserSignIn", user_id=user.user_id, timestamp=datetime.now(), event_data={})
@@ -289,6 +288,15 @@ graph LR
 I used the same PostgreSQL database to store the `Events` and the `UserQuestRewards` table but it would be better to store the events on a appropriate Event Store like EventStoreDB.
 
 
+## Caching (CQRS)
+
+The `catalog-service` implements a Redis cache at `./catalog-service/app/crud.ppy` for read queries on the database, the first query will be a miss but any sequential queries will fetch the data from redis cache, as it is shown below when fetching `Reward` and `Quest` data from the DB:
+
+![Redis cache](images/redis-cache.png)
+
+This is not the complete implementation of the `Command and Query Responsibility Segregation` pattern as there is no separation of Commands and Queries, but this is an import part of how to implement CQRS:
+
+![Redis cache diagram](images/redis-cache-diagram.png)
 
 ## Note
 
