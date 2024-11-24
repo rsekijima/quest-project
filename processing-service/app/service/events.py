@@ -28,7 +28,7 @@ def completed_streak(quest: Quest, user_quest_reward: UserQuestReward):
 
 def update_user_progress(session: Session, user_quest_reward: UserQuestReward) -> UserQuestReward:
     """
-    Update the progress of a user in a quest (reset the streak and increase the duplication vlaue)
+    Update the progress of a user in a quest (reset the streak and increase the duplication value)
     """
     user_quest_reward_update = UserQuestRewardUpdate(streak=0,duplication=user_quest_reward.duplication+1)
     user_quest_reward = update_user_quest_reward(session=session, db_user_quest_reward=user_quest_reward, user_quest_reward_update=user_quest_reward_update)
