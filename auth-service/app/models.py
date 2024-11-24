@@ -69,7 +69,7 @@ class EventPublish(Event):
 class EventClaimBase(SQLModel):
     user_id: uuid.UUID
     quest_id: uuid.UUID
-    reward_type: str
+    reward_item: str
     reward_qty: int
 
 class EventClaim(EventClaimBase, table=True):
@@ -79,7 +79,7 @@ class EventClaim(EventClaimBase, table=True):
 class EventClaimCreate(EventClaimBase):
     user_id: uuid.UUID
     quest_id: uuid.UUID
-    reward_type: str
+    reward_item: str
     reward_qty: int
 
 class Quest(BaseModel):

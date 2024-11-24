@@ -33,7 +33,7 @@ async def process_quest_completed_event(session: Session, event: Event):
         logger.error("Reward with ID {reward_id} not found")
         return
 
-    event_claim_create = EventClaimCreate(user_id=event.user_id,quest_id=quest.quest_id,reward_type=reward.reward_item,reward_qty=reward.reward_qty)
+    event_claim_create = EventClaimCreate(user_id=event.user_id,quest_id=quest.quest_id,reward_item=reward.reward_item,reward_qty=reward.reward_qty)
     create_event_claim(session=session,event_claim_create=event_claim_create)
     return
 
