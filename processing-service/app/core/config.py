@@ -32,6 +32,7 @@ class Settings(BaseSettings):
     # 60 minutes * 24 hours * 8 days = 8 days
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     FRONTEND_HOST: str = "http://localhost:5173"
+    CATALOG_SERVICE_URL: str = 'http://catalog-service:8000'
     ENVIRONMENT: Literal["local", "staging", "production"] = "local"
 
     BACKEND_CORS_ORIGINS: Annotated[
@@ -52,10 +53,10 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = ""
     POSTGRES_DB: str = ""
  
-    FIRST_REWARD_NAME: str = "signin_three"
+    FIRST_REWARD_NAME: str = "UserSignIn"
     FIRST_REWARD_ITEM: str = "diamond"
     FIRST_REWARD_QUANTITY: int = 10
-    FIRST_QUEST_NAME: str = "signin_three"
+    FIRST_QUEST_NAME: str = "UserSignIn"
     FIRST_QUEST_STEAK: int = 3
     FIRST_QUEST_DUPLICATION: int = 2
     FIRST_QUEST_AUTO_CLAIM: bool = False

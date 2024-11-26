@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 from sqlmodel import Field, SQLModel
 from pydantic import BaseModel
+from typing import Dict, Any
 
 # Shared properties
 class UserBase(SQLModel):
@@ -60,3 +61,38 @@ class Event(BaseModel):
     event_type: str
     user_id: uuid.UUID
     timestamp: datetime
+    event_data: Dict[str, Any] = {}
+
+class EventPublish(Event):
+    pass
+
+class EventClaimBase(SQLModel):
+    user_id: uuid.UUID
+    quest_id: uuid.UUID
+    reward_item: str
+    reward_qty: int
+
+class EventClaim(EventClaimBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+
+
+class EventClaimCreate(EventClaimBase):
+    user_id: uuid.UUID
+    quest_id: uuid.UUID
+    reward_item: str
+    reward_qty: int
+
+class Quest(BaseModel):
+    quest_id: uuid.UUID
+    auto_claim: bool 
+    streak: int 
+    duplication: int 
+    name: str
+    description: str | None 
+    reward_id: uuid.UUID
+
+class Reward(BaseModel):
+    reward_id: uuid.UUID
+    reward_name: str
+    reward_item: str
+    reward_qty: int

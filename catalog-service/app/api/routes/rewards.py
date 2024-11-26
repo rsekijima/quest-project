@@ -7,6 +7,7 @@ from app.models import Reward
 from app.api.deps import (
     SessionDep
 )
+from app.crud import get_reward_by_id
 
 router = APIRouter()
 
@@ -18,4 +19,5 @@ def read_reward_by_id(
     """
     Get a specific reward by id.
     """
-    return session.get(Reward, reward_id)
+    reward = get_reward_by_id(session=session, reward_id=reward_id)
+    return reward
