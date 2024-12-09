@@ -3,7 +3,7 @@ from typing import Any
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
-from app.models import User, UserCreate, UserUpdate
+from app.models import User, UserCreate, UserUpdate, EventClaim, EventClaimCreate
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -37,3 +37,11 @@ def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
     session.commit()
     session.refresh(db_user)
     return db_user
+
+
+def create_event_claim(*, session: Session, event_claim_create: EventClaimCreate) -> EventClaim:
+    db_obj = EventClaim.model_validate(event_claim_create)
+    session.add(db_obj)
+    session.commit()
+    session.refresh(db_obj)
+    return db_obj

@@ -60,6 +60,8 @@ class Settings(BaseSettings):
     FIRST_QUEST_DUPLICATION: int = 2
     FIRST_QUEST_AUTO_CLAIM: bool = False
 
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
 
     @computed_field  # type: ignore[prop-decorator]
     @property

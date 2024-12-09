@@ -8,14 +8,14 @@ from app import crud
 from app.api.deps import CurrentUser, SessionDep
 from app.core import security
 from app.core.config import settings
-from app.core.events import publish_event
-from app.models import  Token, UserPublic, UserUpdate, Event
+from app.core.event_queue import rabbitmq_client
+from app.models import  Token, UserPublic, UserUpdate, EventPublish
 
 router = APIRouter()
 
 
 @router.post("/login/access-token")
-def login_access_token(
+async def login_access_token(
     session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ) -> Token:
     """
@@ -31,12 +31,12 @@ def login_access_token(
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
     if user.status == 1:
-        event_in = Event(event_type="UserSignIn", user_id=user.user_id, timestamp=datetime.now())
-        publish_event(event_in)
+        event_in = EventPublish(event_type="UserSignIn", user_id=user.user_id, timestamp=datetime.now(), event_data={})
+        await rabbitmq_client.publish(event=event_in,publish_queue="processing-events")
 
     if user.status == 0:
-        event_in = Event(event_type="NewUserSignIn", user_id=user.user_id, timestamp=datetime.now())
-        publish_event(event_in)
+        event_in = EventPublish(event_type="NewUserSignIn", user_id=user.user_id, timestamp=datetime.now(), event_data={})
+        await rabbitmq_client.publish(event=event_in,publish_queue="processing-events")
         user_in = UserUpdate(status=1)
         crud.update_user(session=session, db_user=user, user_in=user_in)
     

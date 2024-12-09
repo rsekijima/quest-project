@@ -8,16 +8,16 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app.api.main import api_router
 from app.core.config import settings
-from app.core.events.consumer import rabbitmq_consumer
+from app.core.event_queue import rabbitmq_client
 
 def custom_generate_unique_id(route: APIRoute) -> str:
     return f"{route.tags[0]}-{route.name}"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    consumer = asyncio.create_task(rabbitmq_consumer())
+    consumer = asyncio.create_task(rabbitmq_client.consume())
     yield
-    consumer.cancel
+    consumer.cancel()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
